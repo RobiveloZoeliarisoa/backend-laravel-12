@@ -9,7 +9,7 @@ use App\Http\Requests\StoreCustomerRequest;
 use App\Http\Requests\UpdateCustomerRequest;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use App\Services\V1\CustomerQuery;
+use App\Filters\V1\CustomersFilter;
 
 class CustomerController extends Controller
 {
@@ -20,13 +20,14 @@ class CustomerController extends Controller
     {
 
         try {
-            $filter = new CustomerQuery();
+            $filter = new CustomersFilter();
             $queryItems = $filter->transform($request); // [['column', 'operator', 'value']]
 
             if (count($queryItems) == 0) {
                 return new CustomerCollection(Customer::paginate());
             } else {
-                return new CustomerCollection(Customer::where($queryItems)->paginate());
+                $customers = Customer::where($queryItems)->paginate();
+                return new CustomerCollection($customers->appends($request->query()));
             }
         } catch (\Exception $e) {
            return $e;
